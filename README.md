@@ -51,8 +51,8 @@ All checks are read-only and do not install or update software.
 
 ## Supported tools and platforms
 
-| Tool | Executable checked | Linux package | Windows package |
-| --- | --- | --- | --- |
+| Tool | Executable Checked | Linux Package | Windows Package |
+|------|--------------------|---------------|-----------------|
 | Ngspice | `ngspice` | `ngspice` | `ngspice` |
 | KiCad | `kicad-cli` | `kicad` | `kicad` |
 
@@ -96,4 +96,4 @@ The tests do not install, update, or invoke real software.
 
 ## Future improvements
 
-Add other eSim tools, package managers such as `dnf`, `pacman`, and Homebrew, structured configuration, and richer repository/version reporting.
+Add other eSim tools, package managers such as `dnf`, `pacman`, and Homebrew, richer repository/version reporting, and broader cross-platform support.
