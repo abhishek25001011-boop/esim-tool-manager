@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from manager.installer import CommandResult, Installer
 from manager.health_checker import HealthChecker, HealthReport
+from manager.config_manager import ConfigurationManager
 from manager.tool_registry import ToolMetadata, ToolRegistry
 from manager.updater import UpdateStatus, Updater
 from manager.version_manager import VersionCheckResult, VersionManager
@@ -14,10 +15,11 @@ class ToolManager:
 
     def __init__(self) -> None:
         self.registry = ToolRegistry()
+        self.configuration = ConfigurationManager(self.registry)
         self.installer = Installer()
         self.version_manager = VersionManager()
         self.updater = Updater(self.installer)
-        self.health_checker = HealthChecker(self.registry, self.version_manager, self.installer)
+        self.health_checker = HealthChecker(self.registry, self.version_manager, self.installer, self.configuration)
         self.last_message = ""
 
     def list_tools(self) -> tuple[ToolMetadata, ...]:
@@ -26,6 +28,10 @@ class ToolManager:
     def health_check(self) -> HealthReport:
         """Return a read-only system and managed-tool readiness report."""
         return self.health_checker.check()
+
+    def environment_readiness(self):
+        """Return the eSim-specific readiness summary derived from health checks."""
+        return self.health_checker.readiness()
 
     def _tool(self, identifier: str) -> ToolMetadata | None:
         tool = self.registry.get(identifier)
@@ -36,7 +42,10 @@ class ToolManager:
         tool = self._tool(identifier)
         if tool is None:
             raise ValueError(self.last_message)
-        return self.version_manager.check(tool)
+        path_validation = self.configuration.validate_path(identifier)
+        if not path_validation.valid:
+            return VersionCheckResult(tool, False, message=path_validation.message)
+        return self.version_manager.check(tool, path_validation.configured_path)
 
     def install_command(self, identifier: str) -> tuple[str, ...] | None:
         tool = self._tool(identifier)

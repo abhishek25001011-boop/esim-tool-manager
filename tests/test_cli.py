@@ -27,7 +27,7 @@ class DryRunCliTests(unittest.TestCase):
         return manager
 
     @patch("main.ToolManager")
-    @patch("builtins.input", side_effect=["3", "ngspice", "7"])
+    @patch("builtins.input", side_effect=["3", "ngspice", "9"])
     def test_dry_run_install_displays_command_without_execution(self, _input, manager_class) -> None:
         manager = self._manager()
         manager_class.return_value = manager
@@ -41,7 +41,7 @@ class DryRunCliTests(unittest.TestCase):
         manager.install.assert_not_called()
 
     @patch("main.ToolManager")
-    @patch("builtins.input", side_effect=["5", "ngspice", "7"])
+    @patch("builtins.input", side_effect=["5", "ngspice", "9"])
     def test_dry_run_update_displays_command_without_execution(self, _input, manager_class) -> None:
         manager = self._manager()
         manager_class.return_value = manager

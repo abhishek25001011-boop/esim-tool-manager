@@ -39,10 +39,11 @@ class HealthCheckerTests(unittest.TestCase):
             HealthStatus.PASS,
             HealthStatus.PASS,
             HealthStatus.PASS,
+            HealthStatus.PASS,
             HealthStatus.WARNING,
         ])
-        self.assertIn("version 42", report.checks[3].message)
-        self.assertIn("not found", report.checks[4].message)
+        self.assertIn("version 42", report.checks[4].message)
+        self.assertIn("not found", report.checks[5].message)
         self.installer.apt_command.assert_called_once_with("--version")
 
     def test_linux_reports_missing_apt_without_running_commands(self) -> None:
@@ -59,8 +60,8 @@ class HealthCheckerTests(unittest.TestCase):
 
         report = checker.check()
 
-        self.assertEqual(report.checks[2].status, HealthStatus.FAIL)
-        self.assertIn("apt was not found", report.checks[2].message)
+        self.assertEqual(report.checks[3].status, HealthStatus.FAIL)
+        self.assertIn("apt was not found", report.checks[3].message)
         self.installer.apt_command.assert_not_called()
 
     def test_windows_reports_chocolatey_status(self) -> None:
@@ -78,9 +79,26 @@ class HealthCheckerTests(unittest.TestCase):
 
         report = checker.check()
 
-        self.assertEqual(report.checks[2].label, "Chocolatey")
-        self.assertEqual(report.checks[2].status, HealthStatus.PASS)
+        self.assertEqual(report.checks[3].label, "Chocolatey")
+        self.assertEqual(report.checks[3].status, HealthStatus.PASS)
         self.installer.apt_command.assert_not_called()
+
+    def test_readiness_is_not_ready_when_a_required_check_fails(self) -> None:
+        self.version_manager.check.return_value = VersionCheckResult(
+            self.registry.get("ngspice"), False, message="not found"
+        )
+        checker = HealthChecker(
+            self.registry,
+            self.version_manager,
+            self.installer,
+            which=lambda _name: None,
+            python_version=lambda: "3.13.0",
+        )
+
+        readiness = checker.readiness()
+
+        self.assertEqual(readiness.level, "NOT READY")
+        self.assertTrue(any("apt was not found" in item for item in readiness.recommendations))
 
 
 if __name__ == "__main__":

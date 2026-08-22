@@ -7,6 +7,7 @@ import argparse
 from manager.tool_manager import ToolManager
 from manager.version_manager import VersionCheckResult, format_version
 from manager.health_checker import HealthReport
+from manager.config_manager import ConfigurationError
 
 
 def prompt_for_tool(manager: ToolManager) -> str | None:
@@ -45,6 +46,45 @@ def print_health_report(report: HealthReport) -> None:
         print(f"[{check.status.value}] {check.label}: {check.message}")
 
 
+def print_readiness_report(manager: ToolManager) -> None:
+    """Display the eSim readiness decision derived from the shared health check."""
+    report = manager.environment_readiness()
+    print_header("eSim Environment Readiness")
+    print(f"[{report.level}] {report.message}")
+    if report.recommendations:
+        print("Recommendations:")
+        for recommendation in report.recommendations:
+            print(f"- {recommendation}")
+
+
+def configure_tool_path(manager: ToolManager) -> None:
+    """Interactively inspect or edit only the project-local executable overrides."""
+    print_header("Tool Configuration / Executable Paths")
+    print(manager.configuration.status().message)
+    for tool in manager.list_tools():
+        validation = manager.configuration.validate_path(tool.identifier)
+        configured = validation.configured_path or "not configured (PATH discovery)"
+        print(f"- {tool.name}: {configured} - {validation.message}")
+    choice = input("Choose: [S]et path, [C]lear path, or [B]ack: ").strip().lower()
+    if choice == "b":
+        return
+    tool_id = prompt_for_tool(manager)
+    if tool_id is None:
+        return
+    try:
+        if choice == "s":
+            path = input("Full executable path: ").strip()
+            manager.configuration.set_path(tool_id, path)
+            print("[PASS] Configuration saved. No system PATH or registry settings were changed.")
+        elif choice == "c":
+            manager.configuration.clear_path(tool_id)
+            print("[PASS] Configured path removed; PATH discovery will be used.")
+        else:
+            print("[WARNING] No configuration change was made.")
+    except ConfigurationError as exc:
+        print(f"[ERROR] Configuration was not changed: {exc}")
+
+
 def confirmed(action: str) -> bool:
     """Return true only for an explicit yes answer."""
     return input(f"{action} [y/N]: ").strip().lower() in {"y", "yes"}
@@ -55,14 +95,15 @@ def run(dry_run: bool = False) -> None:
     manager = ToolManager()
     menu = (
         "\n1. List Tools\n2. Check Versions\n3. Install Tool"
-        "\n4. Check Updates\n5. Update Tool\n6. System Health / Dependency Check\n7. Exit"
+        "\n4. Check Updates\n5. Update Tool\n6. System Health / Dependency Check"
+        "\n7. Tool Configuration / Executable Paths\n8. eSim Environment Readiness\n9. Exit"
     )
     print_header("eSim Automated Tool Manager")
     if dry_run:
         print("[DRY RUN] System-changing commands will be displayed but never executed.")
     while True:
         print(menu)
-        choice = input("Choose an option (1-7): ").strip()
+        choice = input("Choose an option (1-9): ").strip()
         if choice == "1":
             print_header("Managed Tools")
             for tool in manager.list_tools():
@@ -127,10 +168,14 @@ def run(dry_run: bool = False) -> None:
         elif choice == "6":
             print_health_report(manager.health_check())
         elif choice == "7":
+            configure_tool_path(manager)
+        elif choice == "8":
+            print_readiness_report(manager)
+        elif choice == "9":
             print("Goodbye.")
             return
         else:
-            print("Please enter a number from 1 to 7.")
+            print("Please enter a number from 1 to 9.")
 
 
 def parse_args() -> argparse.Namespace:

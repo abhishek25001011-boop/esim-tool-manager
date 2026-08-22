@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import shutil
 import subprocess
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Callable
 
@@ -63,11 +64,16 @@ class VersionManager:
         self._runner = runner
         self._logger = get_logger("version")
 
-    def check(self, tool: ToolMetadata) -> VersionCheckResult:
+    def check(self, tool: ToolMetadata, executable_override: str | None = None) -> VersionCheckResult:
         """Find the executable, run its version command, and parse its output."""
-        path = self._which(tool.executable)
+        if executable_override:
+            candidate = Path(executable_override).expanduser()
+            path = str(candidate) if candidate.is_file() else None
+        else:
+            path = self._which(tool.executable)
         if not path:
-            message = f"Executable '{tool.executable}' was not found on PATH."
+            source = f"configured path '{executable_override}'" if executable_override else "PATH"
+            message = f"Executable '{tool.executable}' was not found using {source}."
             self._logger.info("%s: %s", tool.identifier, message)
             return VersionCheckResult(tool, False, message=message)
         try:

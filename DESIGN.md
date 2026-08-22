@@ -11,6 +11,7 @@
 - `installer.py`: OS/package-manager detection and confirmed package command execution.
 - `updater.py`: package-manager update-status check and update command construction.
 - `logger.py`: shared standard-library logging setup.
+- `config_manager.py`: project-local JSON executable overrides and path validation; it never modifies system configuration.
 - `tools/`: independent Ngspice and KiCad metadata definitions; add a similar module for each future tool.
 
 ## Tool registry
@@ -29,6 +30,10 @@ Each tool module returns a record containing a stable ID, display name, executab
 1. `shutil.which` verifies that the executable is on `PATH`.
 2. The discovered executable path is used with the registered version arguments, captured output, and a timeout.
 3. A numeric version is parsed from stdout/stderr; otherwise the executable is reported as found with unparseable output. No installed version is fabricated.
+
+## Configuration and readiness flow
+
+The optional `.esim-tool-manager.json` contains only a `tool_paths` object mapping managed IDs to explicit executable files. Configuration is validated before version detection; absent configuration safely falls back to `PATH`. The health checker reuses those validations and version results to produce an eSim readiness level of READY, WARNING, or NOT READY with recommendations. No registry or system environment variable is modified.
 
 ## Update flow
 

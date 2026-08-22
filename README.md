@@ -16,6 +16,7 @@ The application is a small, modular Python CLI. It supports Ngspice and KiCad, d
 - Linux `apt` and Windows Chocolatey commands, with package-manager/OS checks.
 - Confirmation before every installation or update command.
 - Read-only System Health / Dependency Check for OS, Python, package-manager, privilege readiness, executables, and detected versions.
+- Project-local JSON configuration for validated Ngspice/KiCad executable-path overrides, plus eSim Environment Readiness reporting.
 - Standard-library logging and graceful handling of missing tools, commands, permissions, and invalid output.
 - Unit tests that use mocked executable discovery and subprocess results.
 
@@ -47,6 +48,8 @@ Dry-run mode uses the same platform and package-manager command-building logic a
 The professional menu provides List Tools, Check Versions, Install Tool, Check Updates, Update Tool, and System Health / Dependency Check. Choose `2`, enter `ngspice`, and the CLI runs its registered version command only if the executable exists. For an install, choose `3`; the exact command is displayed and runs only after entering `y` or `yes`. Choosing `5` first shows the detected current version, checks package-manager status, displays the exact update command, and then requests confirmation.
 
 Choose `6` for **System Health / Dependency Check**. It performs no installation or update: it reports PASS/WARNING/FAIL status for the operating system, Python version, relevant package manager, Linux privilege readiness, and each managed tool's executable/version state.
+
+Choose `7` to view, set, or clear an executable override in `.esim-tool-manager.json` in the current project directory. Configured paths must point to existing executable files. This feature never changes the Windows registry or system `PATH`. Choose `8` for **eSim Environment Readiness**, which summarizes shared health results as READY, WARNING, or NOT READY and lists actionable recommendations.
 
 ## Testing
 
