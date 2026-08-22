@@ -16,9 +16,38 @@ The application is a small, modular Python CLI. It supports Ngspice and KiCad, d
 - Linux `apt` and Windows Chocolatey commands, with package-manager/OS checks.
 - Confirmation before every installation or update command.
 - Read-only System Health / Dependency Check for OS, Python, package-manager, privilege readiness, executables, and detected versions.
-- Project-local JSON configuration for validated Ngspice/KiCad executable-path overrides, plus eSim Environment Readiness reporting.
+- Safe Configuration Handling for Ngspice and KiCad, including configurable executable paths, path validation, configuration-file management, and read-only environment diagnostics.
+- eSim Environment Readiness report combining OS, Python, package-manager, tool version, executable path, and configuration checks with READY/WARNING/NOT READY status.
 - Standard-library logging and graceful handling of missing tools, commands, permissions, and invalid output.
 - Unit tests that use mocked executable discovery and subprocess results.
+
+## Configuration Handling
+
+The tool manager supports safe configuration of managed eSim tool executables.
+
+Configuration can store custom executable paths for:
+- Ngspice
+- KiCad
+
+The configuration manager validates configured paths and reports missing or invalid executables.
+
+The tool manager does not automatically modify the Windows registry or system PATH.
+
+## eSim Environment Readiness
+
+The Environment Readiness report combines:
+
+- Operating system detection
+- Python availability
+- Ngspice/KiCad installation status
+- Detected versions
+- Executable paths
+- Package-manager availability
+- Configuration validity
+
+The report provides an overall READY, WARNING, or NOT READY status with actionable recommendations.
+
+All checks are read-only and do not install or update software.
 
 ## Supported tools and platforms
 
