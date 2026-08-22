@@ -1,64 +1,33 @@
 # eSim Automated Tool Manager
 
-## Problem statement
+## Project Overview
 
-This FOSSEE eSim Semester Internship 2026 screening-task prototype manages installation and package-manager updates for common eSim tools. It demonstrates safe tool discovery and real version detection without silently changing a user's machine.
+This project implements a modular Python-based automated tool manager for the FOSSEE eSim Semester Internship 2026 screening task.
 
-## Overview
+It manages Ngspice and KiCad through a safe terminal interface: it discovers tools, detects their real installed versions, prepares platform-aware installation and update commands, and requires explicit confirmation before any system-changing action.
 
-The application is a small, modular Python CLI. It supports Ngspice and KiCad, detects installed executables with `PATH`, reads their actual version output through `subprocess`, and uses available system package managers for installation and updates only after explicit confirmation.
+## Implemented Features
 
-## Implemented requirements
+- Tool registry for Ngspice and KiCad.
+- Real executable discovery and version detection using `subprocess`.
+- Linux `apt` and Windows Chocolatey installation and update workflows.
+- Explicit confirmation and return-code-based success/failure reporting.
+- `--dry-run` mode that displays install/update commands without executing them.
+- System Health / Dependency Check for OS, Python, package managers, privileges, executable availability, and versions.
+- Project-local JSON executable-path configuration without changing the Windows registry or system `PATH`.
+- eSim Environment Readiness report with READY, WARNING, or NOT READY guidance.
+- Standard-library logging, error handling, and mocked unit tests.
 
-- List supported tools, check installed versions, install, check updates, and update through a menu.
-- Metadata registry for Ngspice and KiCad.
-- Real executable and version-command detection; no hardcoded installed versions.
-- Linux `apt` and Windows Chocolatey commands, with package-manager/OS checks.
-- Confirmation before every installation or update command.
-- Read-only System Health / Dependency Check for OS, Python, package-manager, privilege readiness, executables, and detected versions.
-- Safe Configuration Handling for Ngspice and KiCad, including configurable executable paths, path validation, configuration-file management, and read-only environment diagnostics.
-- eSim Environment Readiness report combining OS, Python, package-manager, tool version, executable path, and configuration checks with READY/WARNING/NOT READY status.
-- Standard-library logging and graceful handling of missing tools, commands, permissions, and invalid output.
-- Unit tests that use mocked executable discovery and subprocess results.
+## Supported Tools and Platforms
 
-## Configuration Handling
+| Tool    | Executable Checked | Linux Package | Windows Package |
+| ------- | ------------------ | ------------- | --------------- |
+| Ngspice | `ngspice`          | `ngspice`     | `ngspice`       |
+| KiCad   | `kicad-cli`        | `kicad`       | `kicad`         |
 
-The tool manager supports safe configuration of managed eSim tool executables.
+Linux installation and updates require `apt` and, when the process is not elevated, `sudo`. Windows installation and updates require Chocolatey (`choco`).
 
-Configuration can store custom executable paths for:
-- Ngspice
-- KiCad
-
-The configuration manager validates configured paths and reports missing or invalid executables.
-
-The tool manager does not automatically modify the Windows registry or system PATH.
-
-## eSim Environment Readiness
-
-The Environment Readiness report combines:
-
-- Operating system detection
-- Python availability
-- Ngspice/KiCad installation status
-- Detected versions
-- Executable paths
-- Package-manager availability
-- Configuration validity
-
-The report provides an overall READY, WARNING, or NOT READY status with actionable recommendations.
-
-All checks are read-only and do not install or update software.
-
-## Supported tools and platforms
-
-| Tool | Executable Checked | Linux Package | Windows Package |
-|------|--------------------|---------------|-----------------|
-| Ngspice | `ngspice` | `ngspice` | `ngspice` |
-| KiCad | `kicad-cli` | `kicad` | `kicad` |
-
-Linux installation/update requires `apt` (and `sudo` when the process is not already elevated); Windows requires Chocolatey (`choco`).
-
-## Setup and usage
+## Setup
 
 Use Python 3.10 or later. No third-party dependencies are required.
 
@@ -66,19 +35,40 @@ Use Python 3.10 or later. No third-party dependencies are required.
 python main.py
 ```
 
-For a safe preview of installation and update commands:
+## Usage
+
+The interactive menu provides:
+
+- List Tools
+- Check Versions
+- Install Tool
+- Check Updates
+- Update Tool
+- System Health / Dependency Check
+- Tool Configuration / Executable Paths
+- eSim Environment Readiness
+
+Installation and update commands are shown before execution and run only after entering `y` or `yes`.
+
+### Dry-Run Mode
+
+Preview the same installation and update commands without changing the system:
 
 ```bash
 python main.py --dry-run
 ```
 
-Dry-run mode uses the same platform and package-manager command-building logic as normal mode, displays commands with a `[DRY RUN]` marker, and never executes an installation or update command or changes system configuration.
+Dry-run mode never executes installation or update commands and never changes system configuration.
 
-The professional menu provides List Tools, Check Versions, Install Tool, Check Updates, Update Tool, and System Health / Dependency Check. Choose `2`, enter `ngspice`, and the CLI runs its registered version command only if the executable exists. For an install, choose `3`; the exact command is displayed and runs only after entering `y` or `yes`. Choosing `5` first shows the detected current version, checks package-manager status, displays the exact update command, and then requests confirmation.
+## Configuration Handling
 
-Choose `6` for **System Health / Dependency Check**. It performs no installation or update: it reports PASS/WARNING/FAIL status for the operating system, Python version, relevant package manager, Linux privilege readiness, and each managed tool's executable/version state.
+Choose **Tool Configuration / Executable Paths** to view, set, or clear Ngspice and KiCad executable overrides. Overrides are stored in `.esim-tool-manager.json` in the current project directory and must point to existing executable files.
 
-Choose `7` to view, set, or clear an executable override in `.esim-tool-manager.json` in the current project directory. Configured paths must point to existing executable files. This feature never changes the Windows registry or system `PATH`. Choose `8` for **eSim Environment Readiness**, which summarizes shared health results as READY, WARNING, or NOT READY and lists actionable recommendations.
+When no override is configured, the manager uses normal `PATH` discovery. The application never modifies the Windows registry, system environment variables, or system `PATH`.
+
+## Environment Readiness
+
+**System Health / Dependency Check** reports PASS, WARNING, and FAIL results for host and tool dependencies. **eSim Environment Readiness** summarizes the same checks as READY, WARNING, or NOT READY and provides actionable recommendations.
 
 ## Testing
 
@@ -86,14 +76,14 @@ Choose `7` to view, set, or clear an executable override in `.esim-tool-manager.
 python -m unittest discover -v
 ```
 
-The tests do not install, update, or invoke real software.
+The unit tests use mocks and temporary files where appropriate; they do not install, update, or modify real system software.
 
 ## Limitations
 
-- Update availability is the package manager's currently configured repository status, not an independently fetched upstream "latest" version.
-- `apt list --upgradable` does not refresh package indexes; users may run their normal system refresh first.
-- Only `apt` and Chocolatey are included in this MVP; macOS and other Linux package managers are intentionally unsupported.
+- Update availability comes from configured package-manager repositories; the application does not invent upstream latest-version data.
+- `apt list --upgradable` does not refresh package indexes.
+- This MVP supports `apt` and Chocolatey only; macOS and other Linux package managers are not currently supported.
 
-## Future improvements
+## Future Improvements
 
-Add other eSim tools, package managers such as `dnf`, `pacman`, and Homebrew, richer repository/version reporting, and broader cross-platform support.
+Potential extensions include additional eSim tools, package managers such as `dnf`, `pacman`, and Homebrew, and richer repository/version reporting.
