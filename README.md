@@ -86,4 +86,4 @@ The unit tests use mocks and temporary files where appropriate; they do not inst
 
 ## Future Improvements
 
-Potential extensions include additional eSim tools, package managers such as `dnf`, `pacman`, and Homebrew, and richer repository/version reporting.
+Potential extensions include additional eSim tools, package managers such as `dnf`, `pacman`, and Homebrew, richer repository/version reporting, automated environment diagnostics, and broader cross-platform support.
